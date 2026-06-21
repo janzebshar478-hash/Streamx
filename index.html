@@ -6,5 +6,1047 @@
   <body>
     <h1>My website has successfully launched!</h1>
   </body>
-</html>
+</html>import { useState, useEffect } from "react";
+
+// ── DESIGN TOKENS ──────────────────────────────────────────────
+const T = {
+  bg:"#0a0a0f", surface:"#13131a", card:"#1a1a26", border:"#ffffff12",
+  accent:"#3b82f6", accentHi:"#60a5fa", accentDim:"#1d4ed8",
+  text:"#f0f0f8", muted:"#8888aa",
+  danger:"#ef4444", dangerDim:"#7f1d1d",
+  success:"#22c55e", successDim:"#14532d",
+  gold:"#f59e0b", goldDim:"#78350f",
+  purple:"#a855f7", purpleDim:"#581c87",
+};
+
+// ── DATA ───────────────────────────────────────────────────────
+const VIDEOS = [
+  {id:1,title:"How to Build a React App from Scratch",channel:"CodeWithAli",views:"1.2M",time:"2 days ago",dur:"12:45",thumb:"https://picsum.photos/seed/v1/640/360",avatar:"https://picsum.photos/seed/a1/80/80",subs:"450K",likes:24300,dislikes:310,comments:1820,cat:"Tech"},
+  {id:2,title:"Top 10 Travel Destinations 2026",channel:"WorldExplorer",views:"3.4M",time:"1 week ago",dur:"18:22",thumb:"https://picsum.photos/seed/v2/640/360",avatar:"https://picsum.photos/seed/a2/80/80",subs:"1.1M",likes:89200,dislikes:940,comments:4310,cat:"Travel"},
+  {id:3,title:"Learn Python in 1 Hour – Full Course",channel:"TechMaster",views:"5.6M",time:"3 days ago",dur:"59:58",thumb:"https://picsum.photos/seed/v3/640/360",avatar:"https://picsum.photos/seed/a3/80/80",subs:"2.3M",likes:142000,dislikes:1200,comments:9800,cat:"Tech"},
+  {id:4,title:"Amazing Cooking Recipes You Must Try!",channel:"ChefKhan",views:"890K",time:"5 days ago",dur:"22:10",thumb:"https://picsum.photos/seed/v4/640/360",avatar:"https://picsum.photos/seed/a4/80/80",subs:"320K",likes:17500,dislikes:290,comments:640,cat:"Food"},
+  {id:5,title:"The Future of Artificial Intelligence",channel:"AIInsider",views:"2.1M",time:"4 days ago",dur:"35:04",thumb:"https://picsum.photos/seed/v5/640/360",avatar:"https://picsum.photos/seed/a5/80/80",subs:"780K",likes:56000,dislikes:720,comments:3200,cat:"Tech"},
+  {id:6,title:"20-Minute Morning Workout Routine",channel:"FitLife",views:"670K",time:"1 day ago",dur:"20:00",thumb:"https://picsum.photos/seed/v6/640/360",avatar:"https://picsum.photos/seed/a6/80/80",subs:"210K",likes:9800,dislikes:110,comments:720,cat:"Fitness"},
+  {id:7,title:"Cinematic Drone Footage – Iceland 4K",channel:"AeroLens",views:"4.2M",time:"6 days ago",dur:"08:33",thumb:"https://picsum.photos/seed/v7/640/360",avatar:"https://picsum.photos/seed/a7/80/80",subs:"900K",likes:110000,dislikes:450,comments:5600,cat:"Travel"},
+  {id:8,title:"Lofi Hip Hop Beats – Study and Chill",channel:"ChillwaveStudios",views:"9.8M",time:"2 weeks ago",dur:"3:02:00",thumb:"https://picsum.photos/seed/v8/640/360",avatar:"https://picsum.photos/seed/a8/80/80",subs:"3.5M",likes:310000,dislikes:800,comments:22000,cat:"Music"},
+];
+
+const INIT_COMMENTS = [
+  {id:1,user:"Ahmed_Dev",avatar:"https://picsum.photos/seed/c1/60/60",text:"This video is absolutely amazing! Learned so much from it 🔥",likes:234,time:"2 hours ago"},
+  {id:2,user:"Sara_PK",avatar:"https://picsum.photos/seed/c2/60/60",text:"The explanation is so clear and easy to understand. Keep it up!",likes:89,time:"5 hours ago"},
+  {id:3,user:"TechBro99",avatar:"https://picsum.photos/seed/c3/60/60",text:"Been watching this channel for 2 years. Best content creator!",likes:56,time:"1 day ago"},
+  {id:4,user:"ZaraFoods",avatar:"https://picsum.photos/seed/c4/60/60",text:"Please make more videos like this, absolutely loved it 💯",likes:41,time:"3 days ago"},
+];
+
+const PLAYLISTS = ["Watch Later","Favourites","React Tutorials","Travel Vibes","Workout Mix"];
+
+const fmt = n => n>=1e6?(n/1e6).toFixed(1)+"M":n>=1000?(n/1000).toFixed(1)+"K":String(n);
+
+// ── GLOBAL CSS ─────────────────────────────────────────────────
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:${T.bg};color:${T.text};font-family:'Inter',sans-serif}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:${T.surface}}
+::-webkit-scrollbar-thumb{background:${T.border};border-radius:3px}
+
+.vt-app{min-height:100vh;background:${T.bg};color:${T.text}}
+
+/* NAV */
+.vt-nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:${T.bg}dd;backdrop-filter:blur(20px);border-bottom:1px solid ${T.border};display:flex;align-items:center;gap:12px;padding:0 16px}
+.vt-logo{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:900;font-size:20px;color:${T.text};white-space:nowrap;user-select:none}
+.vt-logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,${T.accent},${T.accentDim});display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 20px ${T.accent}55;flex-shrink:0}
+.vt-search{flex:1;max-width:480px;display:flex;border-radius:28px;background:${T.surface};border:1px solid ${T.border};overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.vt-search:focus-within{border-color:${T.accent}88;box-shadow:0 0 0 3px ${T.accent}22}
+.vt-search input{flex:1;background:transparent;border:none;outline:none;color:${T.text};font-size:14px;padding:0 16px;font-family:inherit}
+.vt-search input::placeholder{color:${T.muted}}
+.vt-search-btn{background:${T.accent};border:none;color:#fff;padding:0 18px;cursor:pointer;font-size:16px;transition:background .2s;display:flex;align-items:center}
+.vt-search-btn:hover{background:${T.accentHi}}
+.vt-nav-actions{display:flex;gap:6px;margin-left:auto;align-items:center}
+.vt-nav-btn{background:none;border:none;color:${T.muted};cursor:pointer;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;transition:color .2s,background .2s;white-space:nowrap}
+.vt-nav-btn:hover,.vt-nav-btn.active{color:${T.text};background:${T.card}}
+.vt-signin-btn{background:${T.accent};color:#fff;border:none;border-radius:20px;padding:8px 20px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;transition:background .2s,transform .1s}
+.vt-signin-btn:hover{background:${T.accentHi};transform:translateY(-1px)}
+.vt-user-chip{display:flex;align-items:center;gap:8px;background:${T.card};border:1px solid ${T.accent}44;border-radius:20px;padding:5px 14px 5px 8px;font-size:13px;font-weight:600;color:${T.accentHi};cursor:default}
+.vt-user-chip img{width:26px;height:26px;border-radius:50%;object-fit:cover}
+
+/* SIDEBAR */
+.vt-overlay{position:fixed;inset:0;z-index:90;background:#000000aa;opacity:0;transition:opacity .3s;pointer-events:none}
+.vt-overlay.show{opacity:1;pointer-events:all}
+.vt-sidebar{position:fixed;left:0;top:60px;bottom:0;width:240px;background:${T.surface};border-right:1px solid ${T.border};padding:16px 0;z-index:100;overflow-y:auto;transform:translateX(-100%);transition:transform .32s cubic-bezier(.4,0,.2,1)}
+.vt-sidebar.open{transform:translateX(0)}
+.vt-side-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;font-size:14px;font-weight:500;color:${T.muted};border-radius:0 28px 28px 0;margin:2px 12px 2px 0;transition:color .2s,background .2s}
+.vt-side-item:hover{color:${T.text};background:${T.card}}
+.vt-side-item.active{color:${T.accent};background:${T.accent}18}
+.vt-side-icon{font-size:18px;width:22px;text-align:center;display:flex;align-items:center;justify-content:center}
+.vt-side-section{padding:12px 20px 6px;font-size:11px;font-weight:700;color:${T.muted};letter-spacing:1.2px;text-transform:uppercase;border-top:1px solid ${T.border};margin-top:8px}
+.vt-side-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover}
+
+/* MAIN */
+.vt-main{padding-top:60px;min-height:100vh}
+.vt-content{max-width:1400px;margin:0 auto;padding:24px 20px}
+
+/* CHIPS */
+.vt-chips{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-bottom:24px;scrollbar-width:none}
+.vt-chips::-webkit-scrollbar{height:0}
+.vt-chip{background:${T.card};color:${T.muted};border:1px solid ${T.border};border-radius:20px;padding:7px 18px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap;transition:all .2s;font-family:inherit}
+.vt-chip:hover{color:${T.text};border-color:${T.accent}66}
+.vt-chip.active{background:${T.accent};color:#fff;border-color:${T.accent}}
+
+/* VIDEO GRID */
+.vt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px}
+.vt-card{background:${T.card};border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid ${T.border};transition:transform .22s,border-color .22s,box-shadow .22s}
+.vt-card:hover{transform:translateY(-5px);border-color:${T.accent}44;box-shadow:0 16px 48px #00000070}
+.vt-thumb-wrap{position:relative;aspect-ratio:16/9;overflow:hidden}
+.vt-thumb-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .32s;display:block}
+.vt-card:hover .vt-thumb-wrap img{transform:scale(1.05)}
+.vt-thumb-grad{position:absolute;inset:0;background:linear-gradient(to top,#000c 0%,transparent 55%);opacity:0;transition:opacity .3s}
+.vt-card:hover .vt-thumb-grad{opacity:1}
+.vt-duration{position:absolute;bottom:8px;right:8px;background:#000d;color:#fff;font-size:11px;font-weight:700;padding:3px 7px;border-radius:5px;letter-spacing:.3px}
+.vt-card-body{padding:12px 14px 16px}
+.vt-card-row{display:flex;gap:10px}
+.vt-ch-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;cursor:pointer;border:2px solid ${T.border};transition:border-color .2s}
+.vt-ch-avatar:hover{border-color:${T.accent}}
+.vt-card-title{font-size:14px;font-weight:700;color:${T.text};line-height:1.45;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vt-card-ch{font-size:12px;color:${T.accent};font-weight:600;cursor:pointer;margin-bottom:2px}
+.vt-card-ch:hover{color:${T.accentHi}}
+.vt-card-meta{font-size:12px;color:${T.muted}}
+
+/* WATCH LAYOUT */
+.vt-watch-grid{display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start}
+.vt-player-wrap{width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;position:relative;box-shadow:0 20px 60px #00000090}
+.vt-player-img{width:100%;height:100%;object-fit:cover;display:block}
+.vt-player-ui{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(to top,#000f 0%,#0006 35%,transparent 65%);opacity:0;transition:opacity .25s}
+.vt-player-wrap:hover .vt-player-ui{opacity:1}
+.vt-player-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;gap:28px;align-items:center}
+.vt-pbtn{background:none;border:none;color:#fff;cursor:pointer;font-size:24px;padding:8px;border-radius:50%;transition:background .15s,transform .15s;display:flex;align-items:center;justify-content:center;line-height:1}
+.vt-pbtn:hover{background:#ffffff22;transform:scale(1.18)}
+.vt-pbtn.big{width:68px;height:68px;font-size:30px;background:${T.accent};box-shadow:0 0 36px ${T.accent}99}
+.vt-pbtn.big:hover{background:${T.accentHi};transform:scale(1.1)}
+.vt-progress-area{padding:0 16px 6px}
+.vt-progress{width:100%;height:4px;-webkit-appearance:none;appearance:none;background:#ffffff28;border-radius:2px;cursor:pointer;outline:none;transition:height .15s;accent-color:${T.accent}}
+.vt-progress:hover{height:7px}
+.vt-ctrl-row{display:flex;align-items:center;justify-content:space-between;padding:0 12px 12px;gap:6px}
+.vt-ctrl-l,.vt-ctrl-r{display:flex;align-items:center;gap:4px}
+.vt-ptime{color:#ffffffcc;font-size:13px;font-weight:600;padding:0 6px;white-space:nowrap}
+.vt-vol{width:68px;height:3px;-webkit-appearance:none;appearance:none;background:#ffffff35;border-radius:2px;cursor:pointer;outline:none;accent-color:#fff}
+
+/* VIDEO TITLE & INFO */
+.vt-video-title{font-size:20px;font-weight:800;color:${T.text};margin:16px 0 12px;line-height:1.3}
+.vt-ch-meta-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid ${T.border};margin-bottom:16px}
+.vt-ch-name{font-weight:700;font-size:15px;cursor:pointer;color:${T.text}}
+.vt-ch-name:hover{color:${T.accent}}
+.vt-ch-subs{font-size:12px;color:${T.muted}}
+.vt-sub-btn{border:none;border-radius:20px;padding:9px 22px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.vt-sub-btn.off{background:${T.text};color:${T.bg}}
+.vt-sub-btn.off:hover{background:${T.accentHi};color:#fff}
+.vt-sub-btn.on{background:${T.card};color:${T.muted};border:1px solid ${T.border}}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTION CONTROL PANEL
+═══════════════════════════════════════════════════════════════ */
+.acp-panel{
+  background:linear-gradient(135deg,${T.surface} 0%,${T.card} 100%);
+  border:1px solid ${T.border};
+  border-radius:18px;
+  padding:20px 24px;
+  margin:0 0 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:14px;
+  box-shadow:0 4px 24px #00000040;
+  position:relative;
+  overflow:hidden;
+}
+.acp-panel::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,${T.accent}0d 0%,transparent 70%);
+  pointer-events:none;
+}
+.acp-section{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acp-divider{width:1px;height:32px;background:${T.border};flex-shrink:0}
+
+/* PILL BUTTONS */
+.acp-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1.5px solid ${T.border};
+  border-radius:28px;padding:9px 18px;
+  cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;
+  transition:all .22s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+  background:${T.card};color:${T.text};
+  white-space:nowrap;user-select:none;
+}
+.acp-pill::after{
+  content:'';position:absolute;inset:0;
+  background:currentColor;opacity:0;transition:opacity .15s;
+  border-radius:inherit;
+}
+.acp-pill:hover::after{opacity:.06}
+.acp-pill:active{transform:scale(.96)}
+.acp-pill svg{flex-shrink:0;transition:transform .22s}
+
+/* Like — blue */
+.acp-pill.like{color:${T.text};border-color:${T.border}}
+.acp-pill.like:hover{border-color:${T.accent}88;color:${T.accentHi};background:${T.accent}11}
+.acp-pill.like.on{background:${T.accent}22;border-color:${T.accent};color:${T.accentHi};box-shadow:0 0 18px ${T.accent}33}
+.acp-pill.like.on svg{transform:scale(1.2) rotate(-8deg)}
+
+/* Dislike — muted → red on active */
+.acp-pill.dislike{color:${T.text};border-color:${T.border}}
+.acp-pill.dislike:hover{border-color:${T.danger}66;color:${T.danger};background:${T.danger}11}
+.acp-pill.dislike.on{background:${T.danger}20;border-color:${T.danger};color:${T.danger};box-shadow:0 0 18px ${T.danger}22}
+.acp-pill.dislike.on svg{transform:scale(1.2) rotate(8deg)}
+
+/* Share — purple */
+.acp-pill.share{color:${T.text};border-color:${T.border}}
+.acp-pill.share:hover{border-color:${T.purple}88;color:${T.purple};background:${T.purple}11}
+
+/* Save — gold */
+.acp-pill.save{color:${T.text};border-color:${T.border}}
+.acp-pill.save:hover{border-color:${T.gold}88;color:${T.gold};background:${T.gold}11}
+.acp-pill.save.on{background:${T.gold}22;border-color:${T.gold};color:${T.gold};box-shadow:0 0 18px ${T.gold}22}
+.acp-pill.save.on svg{transform:scale(1.15)}
+
+/* Report — danger ghost */
+.acp-pill.report{color:${T.muted};border-color:transparent;background:transparent;padding-left:10px;padding-right:10px}
+.acp-pill.report:hover{color:${T.danger};border-color:${T.danger}44;background:${T.danger}0d}
+
+/* LIKE BAR (ratio visual) */
+.like-bar-wrap{display:flex;flex-direction:column;gap:4px;min-width:120px}
+.like-bar-track{height:4px;background:${T.border};border-radius:2px;overflow:hidden}
+.like-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,${T.accent},${T.accentHi});transition:width .4s ease}
+.like-bar-label{font-size:11px;color:${T.muted};font-weight:600;display:flex;justify-content:space-between}
+
+/* TOAST */
+.acp-toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:${T.surface};border:1px solid ${T.border};border-radius:12px;
+  padding:10px 20px;font-size:13px;font-weight:600;color:${T.text};
+  z-index:600;pointer-events:none;
+  opacity:0;transition:opacity .25s,transform .25s;
+  box-shadow:0 8px 32px #00000060;
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
+}
+.acp-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SHARE MODAL */
+.vt-modal-bg{position:fixed;inset:0;z-index:500;background:#000000bb;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .2s;pointer-events:none}
+.vt-modal-bg.show{opacity:1;pointer-events:all}
+.vt-modal{background:${T.surface};border-radius:18px;padding:28px;width:100%;max-width:460px;border:1px solid ${T.border};transform:scale(.94) translateY(12px);transition:transform .22s;box-shadow:0 24px 80px #00000070}
+.vt-modal-bg.show .vt-modal{transform:scale(1) translateY(0)}
+.vt-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.vt-modal-head h3{font-size:18px;font-weight:800}
+.vt-modal-sub{font-size:13px;color:${T.muted};margin-bottom:20px}
+.vt-share-url{display:flex;background:${T.card};border:1px solid ${T.border};border-radius:10px;overflow:hidden;margin-bottom:20px}
+.vt-share-url span{flex:1;padding:11px 14px;font-size:13px;color:${T.muted};overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.vt-share-url button{background:${T.accent};border:none;color:#fff;padding:0 18px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;transition:background .2s;font-size:13px}
+.vt-share-url button:hover{background:${T.accentHi}}
+.vt-share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.vt-share-item{display:flex;flex-direction:column;align-items:center;gap:6px;background:${T.card};border:1px solid ${T.border};border-radius:12px;padding:14px 8px;cursor:pointer;transition:border-color .2s,transform .15s}
+.vt-share-item:hover{border-color:${T.accent}66;transform:translateY(-2px)}
+.vt-share-item .pi{font-size:24px}
+.vt-share-item span{font-size:11px;font-weight:600;color:${T.muted}}
+.vt-modal-close{background:${T.card};border:1px solid ${T.border};border-radius:10px;padding:11px;color:${T.text};font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;width:100%;transition:border-color .2s}
+.vt-modal-close:hover{border-color:${T.accent}55}
+
+/* PLAYLIST MODAL */
+.pl-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;max-height:260px;overflow-y:auto}
+.pl-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid ${T.border};border-radius:10px;cursor:pointer;transition:all .2s;background:${T.card}}
+.pl-item:hover{border-color:${T.gold}55;background:${T.gold}09}
+.pl-item.checked{border-color:${T.gold};background:${T.gold}14}
+.pl-icon{width:36px;height:36px;border-radius:8px;background:${T.surface};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pl-item.checked .pl-icon{background:${T.gold}22}
+.pl-label{flex:1;font-size:14px;font-weight:600;color:${T.text}}
+.pl-check{width:20px;height:20px;border-radius:50%;border:2px solid ${T.border};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;transition:all .2s;flex-shrink:0}
+.pl-item.checked .pl-check{background:${T.gold};border-color:${T.gold};color:#000}
+.pl-new-row{display:flex;gap:8px;margin-bottom:16px}
+.pl-new-input{flex:1;background:${T.card};border:1.5px solid ${T.border};border-radius:8px;padding:10px 12px;color:${T.text};font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.pl-new-input:focus{border-color:${T.gold}88}
+.pl-new-input::placeholder{color:${T.muted}}
+.pl-new-btn{background:${T.gold};color:#000;border:none;border-radius:8px;padding:0 16px;font-weight:700;font-family:inherit;cursor:pointer;font-size:13px;transition:background .2s;white-space:nowrap}
+.pl-new-btn:hover{background:#fbbf24}
+.pl-save-btn{width:100%;background:${T.gold};color:#000;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer;transition:background .2s}
+.pl-save-btn:hover{background:#fbbf24}
+
+/* REPORT MODAL */
+.report-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.report-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid ${T.border};border-radius:10px;cursor:pointer;background:${T.card};transition:all .2s;font-size:14px;font-weight:500;color:${T.text}}
+.report-item:hover{border-color:${T.danger}55;background:${T.danger}09;color:${T.danger}}
+.report-item.selected{border-color:${T.danger};background:${T.danger}14;color:${T.danger}}
+.report-submit{width:100%;background:${T.danger};color:#fff;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer;margin-top:4px;transition:background .2s}
+.report-submit:hover{background:#dc2626}
+.report-submit:disabled{background:${T.card};color:${T.muted};cursor:not-allowed}
+
+/* REST OF WATCH PAGE */
+.vt-desc-box{background:${T.card};border-radius:12px;padding:14px 16px;margin:0 0 20px;font-size:14px;color:${T.muted};line-height:1.6;border:1px solid ${T.border}}
+.vt-desc-box strong{color:${T.text}}
+.vt-tag{background:${T.card};border:1px solid ${T.border};color:${T.muted};border-radius:16px;padding:4px 12px;font-size:12px;font-weight:600;display:inline-block}
+.vt-comments-head{font-size:16px;font-weight:800;margin-bottom:18px}
+.vt-comment-input-row{display:flex;gap:12px;margin-bottom:24px;align-items:flex-start}
+.vt-comment-input-row img{width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.vt-ctextarea{flex:1;background:${T.card};border:1px solid ${T.border};border-radius:10px;padding:12px 14px;color:${T.text};font-size:14px;font-family:inherit;resize:none;outline:none;transition:border-color .2s;width:100%}
+.vt-ctextarea:focus{border-color:${T.accent}66}
+.vt-ctextarea::placeholder{color:${T.muted}}
+.vt-comment-acts-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.vt-comment-card{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid ${T.border}}
+.vt-comment-card img{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.vt-cuser{font-size:13px;font-weight:700;color:${T.accentHi}}
+.vt-ctime{color:${T.muted};font-weight:400;font-size:12px;margin-left:6px}
+.vt-ctext{font-size:14px;color:${T.text};line-height:1.5;margin:4px 0 8px}
+.vt-cact{display:flex;gap:6px}
+.vt-ibtn{background:none;border:none;color:${T.muted};cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;padding:3px 8px;border-radius:6px;transition:color .2s,background .2s;display:flex;align-items:center;gap:4px}
+.vt-ibtn:hover{color:${T.text};background:${T.card}}
+.vt-act-btn{display:flex;align-items:center;gap:6px;background:${T.card};color:${T.text};border:1px solid ${T.border};border-radius:20px;padding:8px 16px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;transition:all .2s}
+.vt-act-btn:hover{border-color:${T.accent}66;color:${T.accent}}
+.vt-act-btn.active{background:${T.accent}22;border-color:${T.accent};color:${T.accent}}
+.vt-up-next-title{font-size:15px;font-weight:800;margin-bottom:14px}
+.vt-mini-card{display:flex;gap:10px;margin-bottom:10px;cursor:pointer;padding:8px;border-radius:10px;transition:background .2s}
+.vt-mini-card:hover{background:${T.card}}
+.vt-mini-thumb{position:relative;flex-shrink:0}
+.vt-mini-thumb img{width:158px;height:89px;object-fit:cover;border-radius:8px;display:block}
+.vt-mini-title{font-size:13px;font-weight:700;color:${T.text};line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vt-mini-ch{font-size:12px;color:${T.accent};margin-top:4px}
+.vt-mini-meta{font-size:12px;color:${T.muted};margin-top:2px}
+
+/* TRENDING */
+.vt-trend-row{display:flex;gap:16px;padding:16px;border-bottom:1px solid ${T.border};cursor:pointer;border-radius:12px;transition:background .2s;align-items:flex-start;margin:0 -4px}
+.vt-trend-row:hover{background:${T.card}}
+.vt-rank{font-size:30px;font-weight:900;color:${T.border};width:44px;text-align:center;flex-shrink:0;line-height:1;padding-top:6px}
+.vt-rank.top{color:${T.gold}}
+
+/* CHANNEL */
+.vt-ch-banner{background:linear-gradient(135deg,${T.accentDim} 0%,${T.bg} 100%);border-radius:18px;padding:36px 32px;margin-bottom:24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;border:1px solid ${T.accent}33;position:relative;overflow:hidden}
+.vt-ch-banner::before{content:'';position:absolute;inset:0;background:url('https://picsum.photos/seed/banner/1200/300') center/cover;opacity:.07}
+.vt-ch-banner>*{position:relative}
+.vt-big-avatar{width:96px;height:96px;border-radius:50%;border:4px solid rgba(255,255,255,.2);object-fit:cover;flex-shrink:0}
+.vt-ch-tabs{display:flex;gap:2px;border-bottom:1px solid ${T.border};margin-bottom:24px}
+.vt-ch-tab{background:none;border:none;padding:12px 22px;font-weight:700;color:${T.muted};border-bottom:3px solid transparent;cursor:pointer;font-family:inherit;font-size:14px;transition:color .2s,border-color .2s;margin-bottom:-1px}
+.vt-ch-tab.active{color:${T.accent};border-bottom-color:${T.accent}}
+
+/* AUTH */
+.vt-auth-wrap{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:24px}
+.vt-auth-box{width:100%;max-width:440px;background:${T.surface};border-radius:20px;padding:40px 36px;border:1px solid ${T.border};box-shadow:0 24px 80px #00000060}
+.vt-auth-logo{text-align:center;margin-bottom:28px}
+.vt-auth-logo .icon{font-size:40px}
+.vt-auth-logo h2{font-size:26px;font-weight:900;color:${T.accent};margin-top:8px}
+.vt-auth-logo p{color:${T.muted};font-size:14px;margin-top:4px}
+.vt-input{width:100%;background:${T.card};border:1px solid ${T.border};border-radius:10px;padding:12px 14px;color:${T.text};font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;transition:border-color .2s}
+.vt-input:focus{border-color:${T.accent}88}
+.vt-input::placeholder{color:${T.muted}}
+.vt-submit-btn{width:100%;background:${T.accent};color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:16px;font-family:inherit;cursor:pointer;margin-top:4px;transition:background .2s,transform .1s}
+.vt-submit-btn:hover{background:${T.accentHi};transform:translateY(-1px)}
+.vt-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:${T.muted};font-size:13px}
+.vt-divider::before,.vt-divider::after{content:'';flex:1;height:1px;background:${T.border}}
+.vt-social-btns{display:flex;gap:10px}
+.vt-social-btn{flex:1;background:${T.card};border:1px solid ${T.border};border-radius:10px;padding:11px;color:${T.text};font-weight:600;font-size:13px;font-family:inherit;cursor:pointer;transition:border-color .2s}
+.vt-social-btn:hover{border-color:${T.accent}66}
+.vt-success{text-align:center}
+.vt-success .big-e{font-size:56px;margin-bottom:16px}
+.vt-success h3{font-size:20px;font-weight:800;margin-bottom:8px}
+.vt-success p{color:${T.muted};margin-bottom:24px}
+.vt-link{color:${T.accent};cursor:pointer;font-weight:600}
+
+/* BOTTOM NAV */
+.vt-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:${T.surface}ee;backdrop-filter:blur(20px);border-top:1px solid ${T.border};height:60px;align-items:stretch}
+.vt-bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:${T.muted};font-size:11px;font-weight:600;font-family:inherit;transition:color .2s}
+.vt-bnav-item.active{color:${T.accent}}
+.vt-bnav-icon{font-size:20px;display:flex;align-items:center;justify-content:center}
+
+/* EMPTY */
+.vt-empty{text-align:center;padding:80px 20px;color:${T.muted}}
+.vt-empty .ei{font-size:52px;margin-bottom:16px}
+.vt-empty h3{font-size:18px;font-weight:700;color:${T.text};margin-bottom:8px}
+
+@media(max-width:900px){
+  .vt-watch-grid{grid-template-columns:1fr}
+  .vt-nav-btn{display:none}
+  .vt-bottom-nav{display:flex}
+  .vt-main{padding-bottom:60px}
+  .vt-video-title{font-size:17px}
+  .acp-panel{padding:16px}
+  .acp-divider{display:none}
+}
+@media(max-width:600px){
+  .vt-content{padding:16px 12px}
+  .vt-grid{grid-template-columns:1fr}
+  .vt-ch-banner{padding:24px 16px}
+  .vt-auth-box{padding:28px 20px}
+  .acp-pill{padding:8px 13px;font-size:12px}
+  .vt-mini-thumb img{width:130px;height:73px}
+}
+`;
+
+function injectCSS(){
+  if(document.getElementById("vt-css"))return;
+  const s=document.createElement("style");
+  s.id="vt-css";s.textContent=CSS;
+  document.head.appendChild(s);
+}
+
+// ── SVG ICONS ─────────────────────────────────────────────────
+const Ic = {
+  Play:    ()=><svg viewBox="0 0 24 24" w="1em" h="1em" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>,
+  Pause:   ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
+  Like:    ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>,
+  Dislike: ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>,
+  Share:   ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
+  Save:    ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>,
+  SaveFill:()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>,
+  Flag:    ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
+  Bell:    ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+  Check:   ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>,
+  Plus:    ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  X:       ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  Full:    ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
+  Vol:     ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="currentColor" strokeWidth="2"/></svg>,
+  Menu:    ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  Search:  ()=><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+};
+
+// ── MAIN COMPONENT ────────────────────────────────────────────
+export default function StreamX(){
+  useEffect(()=>{ injectCSS(); },[]);
+
+  // ── STATE ──────────────────────────────────────────────────
+  const [page,setPage]=useState("home");
+  const [activeVideo,setActiveVideo]=useState(null);
+  const [activeChannel,setActiveChannel]=useState(null);
+  const [subscribed,setSubscribed]=useState({});
+  const [liked,setLiked]=useState({});
+  const [disliked,setDisliked]=useState({});
+  const [savedVideos,setSavedVideos]=useState({});         // global saved state
+  const [savedPlaylists,setSavedPlaylists]=useState({});   // videoId → Set of playlist names
+  const [playlists,setPlaylists]=useState(PLAYLISTS);
+  const [comments,setComments]=useState(INIT_COMMENTS);
+  const [newComment,setNewComment]=useState("");
+  const [searchQ,setSearchQ]=useState("");
+  const [signupData,setSignupData]=useState({name:"",email:"",password:""});
+  const [signedUp,setSignedUp]=useState(false);
+  const [sidebarOpen,setSidebarOpen]=useState(false);
+  const [playing,setPlaying]=useState(false);
+  const [progress,setProgress]=useState(22);
+  const [volume,setVolume]=useState(80);
+  const [activeTab,setActiveTab]=useState("Videos");
+  const [trendTab,setTrendTab]=useState("Now");
+  const [chip,setChip]=useState("All");
+  // Modal states
+  const [shareModal,setShareModal]=useState(false);
+  const [playlistModal,setPlaylistModal]=useState(false);
+  const [reportModal,setReportModal]=useState(false);
+  const [copied,setCopied]=useState(false);
+  const [newPLName,setNewPLName]=useState("");
+  const [reportReason,setReportReason]=useState("");
+  const [reported,setReported]=useState({});
+  // Toast
+  const [toast,setToast]=useState({show:false,msg:"",icon:""});
+
+  // ── HELPERS ────────────────────────────────────────────────
+  const showToast=(msg,icon="✓")=>{
+    setToast({show:true,msg,icon});
+    setTimeout(()=>setToast(t=>({...t,show:false})),2200);
+  };
+
+  const openVideo=v=>{setActiveVideo(v);setPage("watch");setPlaying(false);setProgress(0);window.scrollTo(0,0);};
+  const openChannel=v=>{setActiveChannel(v);setPage("channel");setActiveTab("Videos");window.scrollTo(0,0);};
+  const nav=pg=>{setPage(pg);setSidebarOpen(false);window.scrollTo(0,0);};
+
+  const toggleLike=id=>{
+    const next=!liked[id];
+    setLiked(l=>({...l,[id]:next}));
+    if(disliked[id]) setDisliked(d=>({...d,[id]:false}));
+    showToast(next?"Added to liked videos 👍":"Like removed","👍");
+  };
+  const toggleDislike=id=>{
+    const next=!disliked[id];
+    setDisliked(d=>({...d,[id]:next}));
+    if(liked[id]) setLiked(l=>({...l,[id]:false}));
+    showToast(next?"Disliked 👎":"Dislike removed","👎");
+  };
+  const toggleSave=(vid)=>{
+    const next=!savedVideos[vid];
+    setSavedVideos(s=>({...s,[vid]:next}));
+    if(next){ setPlaylistModal(true); }
+    else { showToast("Removed from saved","🗑"); }
+  };
+  const handleCopy=()=>{setCopied(true);showToast("Link copied!","🔗");setTimeout(()=>setCopied(false),2200);};
+  const postComment=()=>{
+    if(!newComment.trim())return;
+    setComments(p=>[{id:Date.now(),user:signedUp?(signupData.name||"You"):"Guest",avatar:"https://picsum.photos/seed/me/60/60",text:newComment,likes:0,time:"Just now"},...p]);
+    setNewComment("");
+    showToast("Comment posted","💬");
+  };
+
+  const togglePlaylist=(vid,name)=>{
+    setSavedPlaylists(sp=>{
+      const cur=new Set(sp[vid]||[]);
+      if(cur.has(name)) cur.delete(name); else cur.add(name);
+      return {...sp,[vid]:[...cur]};
+    });
+  };
+  const addNewPlaylist=()=>{
+    if(!newPLName.trim())return;
+    if(!playlists.includes(newPLName.trim())){
+      setPlaylists(p=>[...p,newPLName.trim()]);
+    }
+    setNewPLName("");
+  };
+  const submitReport=(vid)=>{
+    if(!reportReason)return;
+    setReported(r=>({...r,[vid]:true}));
+    setReportModal(false);
+    setReportReason("");
+    showToast("Report submitted. Thanks for keeping StreamX safe.","🚩");
+  };
+
+  const filtered=VIDEOS.filter(v=>{
+    const q=searchQ.toLowerCase();
+    const mq=!q||v.title.toLowerCase().includes(q)||v.channel.toLowerCase().includes(q);
+    const mc=chip==="All"||v.cat===chip;
+    return mq&&mc;
+  });
+
+  // ── NAV ────────────────────────────────────────────────────
+  const NavBar=()=>(
+    <nav className="vt-nav">
+      <button className="vt-ibtn" style={{fontSize:22}} onClick={()=>setSidebarOpen(o=>!o)}><Ic.Menu/></button>
+      <div className="vt-logo" onClick={()=>nav("home")}>
+        <div className="vt-logo-icon">▶</div>StreamX
+      </div>
+      <div className="vt-search">
+        <input placeholder="Search videos, channels…" value={searchQ}
+          onChange={e=>{setSearchQ(e.target.value);if(page!=="home")nav("home");}}
+          onKeyDown={e=>e.key==="Enter"&&nav("home")}/>
+        <button className="vt-search-btn"><Ic.Search/></button>
+      </div>
+      <div className="vt-nav-actions">
+        {[["home","Home"],["trending","Trending"],["channel","Channel"]].map(([pg,l])=>(
+          <button key={pg} className={`vt-nav-btn${page===pg?" active":""}`} onClick={()=>nav(pg)}>{l}</button>
+        ))}
+        {signedUp
+          ? <div className="vt-user-chip"><img src="https://picsum.photos/seed/me/60/60" alt=""/>{signupData.name||"User"} ✓</div>
+          : <button className="vt-signin-btn" onClick={()=>nav("signup")}>Sign In</button>
+        }
+      </div>
+    </nav>
+  );
+
+  // ── SIDEBAR ────────────────────────────────────────────────
+  const Sidebar=()=>(
+    <>
+      <div className={`vt-overlay${sidebarOpen?" show":""}`} onClick={()=>setSidebarOpen(false)}/>
+      <aside className={`vt-sidebar${sidebarOpen?" open":""}`}>
+        {[["home","🏠","Home"],["trending","🔥","Trending"],["channel","📺","Channel"],["signup","👤","Account"]].map(([pg,ic,l])=>(
+          <div key={pg} className={`vt-side-item${page===pg?" active":""}`} onClick={()=>nav(pg)}>
+            <span className="vt-side-icon">{ic}</span>{l}
+          </div>
+        ))}
+        <div className="vt-side-section">Subscriptions</div>
+        {VIDEOS.slice(0,5).map(v=>(
+          <div key={v.id} className="vt-side-item" onClick={()=>{openChannel(v);setSidebarOpen(false);}}>
+            <img className="vt-side-avatar" src={v.avatar} alt=""/>
+            <span style={{fontSize:13}}>{v.channel}</span>
+          </div>
+        ))}
+        {Object.keys(savedVideos).filter(k=>savedVideos[k]).length>0 && <>
+          <div className="vt-side-section">Saved Videos</div>
+          {VIDEOS.filter(v=>savedVideos[v.id]).map(v=>(
+            <div key={v.id} className="vt-side-item" onClick={()=>{openVideo(v);setSidebarOpen(false);}}>
+              <span className="vt-side-icon">🔖</span>
+              <span style={{fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.title.slice(0,22)}…</span>
+            </div>
+          ))}
+        </>}
+      </aside>
+    </>
+  );
+
+  // ── VIDEO CARD ─────────────────────────────────────────────
+  const VideoCard=({v})=>(
+    <div className="vt-card">
+      <div className="vt-thumb-wrap" onClick={()=>openVideo(v)}>
+        <img src={v.thumb} alt={v.title} loading="lazy"/>
+        <div className="vt-thumb-grad"/>
+        <span className="vt-duration">{v.dur}</span>
+      </div>
+      <div className="vt-card-body">
+        <div className="vt-card-row">
+          <img className="vt-ch-avatar" src={v.avatar} alt="" onClick={e=>{e.stopPropagation();openChannel(v);}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="vt-card-title" onClick={()=>openVideo(v)}>{v.title}</div>
+            <div className="vt-card-ch" onClick={e=>{e.stopPropagation();openChannel(v);}}>{v.channel}</div>
+            <div className="vt-card-meta">{v.views} views · {v.time}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── HOME ───────────────────────────────────────────────────
+  const HomePage=()=>{
+    const chips=["All","Tech","Travel","Food","Fitness","Music"];
+    return(
+      <div className="vt-content">
+        <div className="vt-chips">
+          {chips.map(c=><button key={c} className={`vt-chip${chip===c?" active":""}`} onClick={()=>setChip(c)}>{c}</button>)}
+        </div>
+        {filtered.length===0
+          ? <div className="vt-empty"><div className="ei">🔍</div><h3>No results for "{searchQ}"</h3><p>Try different keywords</p></div>
+          : <div className="vt-grid">{filtered.map(v=><VideoCard key={v.id} v={v}/>)}</div>
+        }
+      </div>
+    );
+  };
+
+  // ── PLAYER ─────────────────────────────────────────────────
+  const VideoPlayer=({v})=>(
+    <div className="vt-player-wrap">
+      <img className="vt-player-img" src={v.thumb} alt={v.title}/>
+      <div className="vt-player-ui">
+        <div className="vt-player-center">
+          <button className="vt-pbtn" onClick={()=>setProgress(Math.max(0,progress-10))}>⏮</button>
+          <button className="vt-pbtn big" onClick={()=>setPlaying(p=>!p)}>
+            {playing?<Ic.Pause/>:<Ic.Play/>}
+          </button>
+          <button className="vt-pbtn" onClick={()=>setProgress(Math.min(100,progress+10))}>⏭</button>
+        </div>
+        <div className="vt-progress-area">
+          <input className="vt-progress" type="range" min={0} max={100} value={progress} onChange={e=>setProgress(+e.target.value)}/>
+        </div>
+        <div className="vt-ctrl-row">
+          <div className="vt-ctrl-l">
+            <button className="vt-pbtn" style={{fontSize:18}} onClick={()=>setPlaying(p=>!p)}>
+              {playing?<Ic.Pause/>:<Ic.Play/>}
+            </button>
+            <span className="vt-ptime">
+              {String(Math.floor(progress/100*720/60)).padStart(2,"0")}:{String(Math.floor(progress/100*720%60)).padStart(2,"0")} / {v.dur}
+            </span>
+            <button className="vt-pbtn" style={{fontSize:18}}><Ic.Vol/></button>
+            <input className="vt-vol" type="range" min={0} max={100} value={volume} onChange={e=>setVolume(+e.target.value)}/>
+          </div>
+          <div className="vt-ctrl-r">
+            <button className="vt-pbtn" style={{fontSize:18}}><Ic.Full/></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ══════════════════════════════════════════════════════════
+  //  ACTION CONTROL PANEL
+  // ══════════════════════════════════════════════════════════
+  const ActionPanel=({v})=>{
+    const vid=v.id;
+    const isLiked=!!liked[vid];
+    const isDisliked=!!disliked[vid];
+    const isSaved=!!savedVideos[vid];
+    const isReported=!!reported[vid];
+    const totalVotes=v.likes+v.dislikes+(isLiked?1:0)-(isDisliked?0:0);
+    const likeRatio=Math.round((v.likes+(isLiked?1:0))/totalVotes*100);
+
+    return(
+      <div className="acp-panel">
+        {/* LEFT: Like / Dislike + ratio bar */}
+        <div className="acp-section" style={{flexDirection:"column",gap:8,alignItems:"flex-start"}}>
+          <div style={{display:"flex",gap:0,alignItems:"center",background:`${T.bg}`,borderRadius:28,border:`1.5px solid ${T.border}`,overflow:"hidden"}}>
+            {/* Like half */}
+            <button
+              className={`acp-pill like${isLiked?" on":""}`}
+              style={{borderRadius:"28px 0 0 28px",border:"none",borderRight:`1.5px solid ${T.border}`}}
+              onClick={()=>toggleLike(vid)}
+            >
+              <Ic.Like/>
+              <span>{fmt(v.likes+(isLiked?1:0))}</span>
+            </button>
+            {/* Dislike half */}
+            <button
+              className={`acp-pill dislike${isDisliked?" on":""}`}
+              style={{borderRadius:"0 28px 28px 0",border:"none"}}
+              onClick={()=>toggleDislike(vid)}
+            >
+              <Ic.Dislike/>
+              <span style={{fontSize:11,opacity:.7}}>{fmt(v.dislikes)}</span>
+            </button>
+          </div>
+          {/* Like ratio bar */}
+          <div className="like-bar-wrap">
+            <div className="like-bar-track">
+              <div className="like-bar-fill" style={{width:`${likeRatio}%`}}/>
+            </div>
+            <div className="like-bar-label">
+              <span>{likeRatio}% positive</span>
+              <span>{fmt(totalVotes)} votes</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="acp-divider"/>
+
+        {/* CENTER: Share / Save */}
+        <div className="acp-section">
+          {/* Share */}
+          <button className="acp-pill share" onClick={()=>setShareModal(true)}>
+            <Ic.Share/> Share
+          </button>
+
+          {/* Save to Playlist */}
+          <button className={`acp-pill save${isSaved?" on":""}`} onClick={()=>toggleSave(vid)}>
+            {isSaved?<Ic.SaveFill/>:<Ic.Save/>}
+            {isSaved?"Saved":"Save"}
+          </button>
+
+          {/* Download (static) */}
+          <button className="acp-pill" style={{color:T.muted}} onClick={()=>showToast("Download started…","⬇")}>
+            <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download
+          </button>
+        </div>
+
+        <div className="acp-divider"/>
+
+        {/* RIGHT: Report */}
+        <div className="acp-section">
+          <button
+            className={`acp-pill report${isReported?" on":""}`}
+            style={isReported?{color:T.danger,borderColor:`${T.danger}44`}:{}}
+            onClick={()=>!isReported&&setReportModal(true)}
+          >
+            <Ic.Flag/>
+            {isReported?"Reported":"Report"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ── SHARE MODAL ────────────────────────────────────────────
+  const ShareModal=({v})=>(
+    <div className={`vt-modal-bg${shareModal?" show":""}`} onClick={e=>{if(e.target===e.currentTarget)setShareModal(false);}}>
+      <div className="vt-modal">
+        <div className="vt-modal-head">
+          <h3>Share this video</h3>
+          <button className="vt-ibtn" style={{fontSize:20}} onClick={()=>setShareModal(false)}><Ic.X/></button>
+        </div>
+        <p className="vt-modal-sub">Share "{v?.title?.slice(0,40)}…"</p>
+        <div className="vt-share-url">
+          <span>https://streamx.app/watch?v={v?.id}</span>
+          <button onClick={handleCopy}>{copied?"✓ Copied!":"Copy link"}</button>
+        </div>
+        <div className="vt-share-grid">
+          {[["💬","WhatsApp"],["✈️","Telegram"],["🐦","Twitter / X"],["📘","Facebook"],["💼","LinkedIn"],["📱","SMS"],["📧","Email"],["🔗","Embed"]].map(([ic,name])=>(
+            <div key={name} className="vt-share-item" onClick={()=>{setShareModal(false);showToast(`Shared on ${name}`,"↗");}}>
+              <span className="pi">{ic}</span><span>{name}</span>
+            </div>
+          ))}
+        </div>
+        <button className="vt-modal-close" onClick={()=>setShareModal(false)}>Done</button>
+      </div>
+    </div>
+  );
+
+  // ── PLAYLIST MODAL ─────────────────────────────────────────
+  const PlaylistModal=({v})=>{
+    if(!v) return null;
+    const vid=v.id;
+    const chosen=new Set(savedPlaylists[vid]||[]);
+    return(
+      <div className={`vt-modal-bg${playlistModal?" show":""}`} onClick={e=>{if(e.target===e.currentTarget)setPlaylistModal(false);}}>
+        <div className="vt-modal">
+          <div className="vt-modal-head">
+            <h3>Save to playlist</h3>
+            <button className="vt-ibtn" style={{fontSize:20}} onClick={()=>setPlaylistModal(false)}><Ic.X/></button>
+          </div>
+          <p className="vt-modal-sub">Choose one or more playlists</p>
+          <div className="pl-new-row">
+            <input className="pl-new-input" placeholder="New playlist name…" value={newPLName} onChange={e=>setNewPLName(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&addNewPlaylist()}/>
+            <button className="pl-new-btn" onClick={addNewPlaylist}><Ic.Plus/> New</button>
+          </div>
+          <div className="pl-list">
+            {playlists.map(name=>(
+              <div key={name} className={`pl-item${chosen.has(name)?" checked":""}`} onClick={()=>togglePlaylist(vid,name)}>
+                <div className="pl-icon">{["⏱","⭐","💻","✈️","💪"][playlists.indexOf(name)%5]}</div>
+                <span className="pl-label">{name}</span>
+                <div className="pl-check">{chosen.has(name)&&"✓"}</div>
+              </div>
+            ))}
+          </div>
+          <button className="pl-save-btn" onClick={()=>{
+            setPlaylistModal(false);
+            showToast(`Saved to ${chosen.size||1} playlist${chosen.size>1?"s":""}  🔖`,"🔖");
+          }}>
+            Save to {chosen.size||1} playlist{chosen.size>1?"s":""}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ── REPORT MODAL ───────────────────────────────────────────
+  const REPORT_REASONS=["Sexual content","Violent or repulsive content","Hateful or abusive content","Harassment or bullying","Harmful or dangerous acts","Misinformation","Spam or misleading","Child safety concern"];
+  const ReportModal=({v})=>(
+    <div className={`vt-modal-bg${reportModal?" show":""}`} onClick={e=>{if(e.target===e.currentTarget)setReportModal(false);}}>
+      <div className="vt-modal">
+        <div className="vt-modal-head">
+          <h3>Report video</h3>
+          <button className="vt-ibtn" style={{fontSize:20}} onClick={()=>setReportModal(false)}><Ic.X/></button>
+        </div>
+        <p className="vt-modal-sub">Help us understand why this content is inappropriate</p>
+        <div className="report-list">
+          {REPORT_REASONS.map(r=>(
+            <div key={r} className={`report-item${reportReason===r?" selected":""}`} onClick={()=>setReportReason(r)}>
+              <span style={{fontSize:18}}>{reportReason===r?"🔴":"⚪"}</span>{r}
+            </div>
+          ))}
+        </div>
+        <button className="report-submit" disabled={!reportReason} onClick={()=>submitReport(v?.id)}>Submit Report</button>
+      </div>
+    </div>
+  );
+
+  // ── WATCH PAGE ─────────────────────────────────────────────
+  const WatchPage=()=>{
+    if(!activeVideo) return null;
+    const v=activeVideo;
+    const vid=v.id;
+    return(
+      <div className="vt-content">
+        {/* Modals */}
+        <ShareModal v={v}/>
+        <PlaylistModal v={v}/>
+        <ReportModal v={v}/>
+
+        <div className="vt-watch-grid">
+          {/* LEFT COLUMN */}
+          <div>
+            <VideoPlayer v={v}/>
+            <h1 className="vt-video-title">{v.title}</h1>
+
+            {/* Channel row + Subscribe */}
+            <div className="vt-ch-meta-row">
+              <img className="vt-ch-avatar" style={{width:48,height:48}} src={v.avatar} alt="" onClick={()=>openChannel(v)}/>
+              <div>
+                <div className="vt-ch-name" onClick={()=>openChannel(v)}>{v.channel}</div>
+                <div className="vt-ch-subs">{v.subs} subscribers</div>
+              </div>
+              <button className={`vt-sub-btn ${subscribed[vid]?"on":"off"}`}
+                onClick={()=>{
+                  const next=!subscribed[vid];
+                  setSubscribed(s=>({...s,[vid]:next}));
+                  showToast(next?`Subscribed to ${v.channel}`:"Unsubscribed",next?"🔔":"🔕");
+                }}>
+                {subscribed[vid]?<><Ic.Bell/> Subscribed</>:"Subscribe"}
+              </button>
+            </div>
+
+            {/* ★ ACTION CONTROL PANEL ★ */}
+            <ActionPanel v={v}/>
+
+            {/* Description */}
+            <div className="vt-desc-box">
+              <strong>{v.views} views · {v.time}</strong><br/><br/>
+              {v.title} — a deep dive for everyone interested in {v.cat}. Like, save, and subscribe for more from {v.channel}!
+              <br/><br/>
+              <span className="vt-tag">#Trending</span>{" "}<span className="vt-tag">#{v.cat}</span>{" "}<span className="vt-tag">#StreamX</span>
+            </div>
+
+            {/* Comments */}
+            <div>
+              <div className="vt-comments-head">💬 {comments.length} Comments</div>
+              <div className="vt-comment-input-row">
+                <img src="https://picsum.photos/seed/me/60/60" alt=""/>
+                <div style={{flex:1}}>
+                  <textarea className="vt-ctextarea" rows={2} placeholder="Add a comment… (Ctrl+Enter)"
+                    value={newComment} onChange={e=>setNewComment(e.target.value)}
+                    onKeyDown={e=>e.key==="Enter"&&e.ctrlKey&&postComment()}/>
+                  <div className="vt-comment-acts-row">
+                    <button className="vt-ibtn" onClick={()=>setNewComment("")}>Cancel</button>
+                    <button className={`vt-act-btn${newComment.trim()?" active":""}`} onClick={postComment}>Comment</button>
+                  </div>
+                </div>
+              </div>
+              {comments.map(c=>(
+                <div key={c.id} className="vt-comment-card">
+                  <img src={c.avatar} alt=""/>
+                  <div style={{flex:1}}>
+                    <span className="vt-cuser">{c.user}</span>
+                    <span className="vt-ctime">{c.time}</span>
+                    <p className="vt-ctext">{c.text}</p>
+                    <div className="vt-cact">
+                      <button className="vt-ibtn"><Ic.Like/> {c.likes}</button>
+                      <button className="vt-ibtn"><Ic.Dislike/></button>
+                      <button className="vt-ibtn">Reply</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div>
+            <div className="vt-up-next-title">Up Next</div>
+            {VIDEOS.filter(x=>x.id!==v.id).map(r=>(
+              <div key={r.id} className="vt-mini-card" onClick={()=>openVideo(r)}>
+                <div className="vt-mini-thumb">
+                  <img src={r.thumb} alt="" loading="lazy"/>
+                  <span className="vt-duration">{r.dur}</span>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="vt-mini-title">{r.title}</div>
+                  <div className="vt-mini-ch">{r.channel}</div>
+                  <div className="vt-mini-meta">{r.views} views{savedVideos[r.id]?" · 🔖":""}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ── TRENDING ───────────────────────────────────────────────
+  const TrendingPage=()=>{
+    const tabs=["Now","Music","Gaming","News","Sports","Tech"];
+    const list=[...VIDEOS].sort((a,b)=>b.likes-a.likes);
+    return(
+      <div className="vt-content">
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+          <span style={{fontSize:28}}>🔥</span>
+          <h2 style={{fontSize:24,fontWeight:900}}>Trending</h2>
+          <span style={{background:T.danger,color:"#fff",fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:700}}>LIVE</span>
+        </div>
+        <div className="vt-chips" style={{marginBottom:28}}>
+          {tabs.map(t=><button key={t} className={`vt-chip${trendTab===t?" active":""}`} onClick={()=>setTrendTab(t)}>{t}</button>)}
+        </div>
+        {list.map((v,i)=>(
+          <div key={v.id} className="vt-trend-row" onClick={()=>openVideo(v)}>
+            <div className={`vt-rank${i<3?" top":""}`}>#{i+1}</div>
+            <img src={v.thumb} alt="" style={{width:200,height:112,objectFit:"cover",borderRadius:12,flexShrink:0}} loading="lazy"/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:16,fontWeight:800,color:T.text,marginBottom:8,lineHeight:1.3}}>{v.title}</div>
+              <div style={{color:T.accent,fontWeight:600,marginBottom:4,cursor:"pointer"}} onClick={e=>{e.stopPropagation();openChannel(v);}}>{v.channel}</div>
+              <div style={{color:T.muted,fontSize:13,marginBottom:10}}>{v.views} views · {v.time}</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <span className="vt-tag" style={{color:T.accentHi}}>👍 {fmt(v.likes)}</span>
+                <span className="vt-tag">💬 {fmt(v.comments)}</span>
+                <span className="vt-tag">⏱ {v.dur}</span>
+                {savedVideos[v.id]&&<span className="vt-tag" style={{color:T.gold}}>🔖 Saved</span>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // ── CHANNEL ────────────────────────────────────────────────
+  const ChannelPage=()=>{
+    const ch=activeChannel||VIDEOS[0];
+    const chVids=VIDEOS.filter((_,i)=>i%2===0);
+    const isSubbed=subscribed[ch.id];
+    const tabs=["Home","Videos","Playlists","Community","About"];
+    return(
+      <div className="vt-content">
+        <div className="vt-ch-banner">
+          <img className="vt-big-avatar" src={ch.avatar} alt=""/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:28,fontWeight:900,marginBottom:6}}>{ch.channel}</div>
+            <div style={{color:"rgba(255,255,255,.7)",fontSize:14,marginBottom:4}}>{ch.subs} subscribers · {chVids.length}+ videos</div>
+            <div style={{color:"rgba(255,255,255,.5)",fontSize:13}}>Creating amazing content since 2019. New uploads every week! 🎬</div>
+          </div>
+          <button className={`vt-sub-btn ${isSubbed?"on":"off"}`}
+            style={!isSubbed?{background:"#fff",color:T.accentDim}:{}}
+            onClick={()=>{const n=!isSubbed;setSubscribed(s=>({...s,[ch.id]:n}));showToast(n?`Subscribed to ${ch.channel}`:"Unsubscribed",n?"🔔":"🔕");}}>
+            {isSubbed?<><Ic.Bell/> Subscribed</>:"Subscribe"}
+          </button>
+        </div>
+        <div className="vt-ch-tabs">
+          {tabs.map(t=><button key={t} className={`vt-ch-tab${activeTab===t?" active":""}`} onClick={()=>setActiveTab(t)}>{t}</button>)}
+        </div>
+        <div className="vt-grid">{chVids.map(v=><VideoCard key={v.id} v={v}/>)}</div>
+      </div>
+    );
+  };
+
+  // ── SIGNUP ─────────────────────────────────────────────────
+  const SignupPage=()=>(
+    <div className="vt-auth-wrap">
+      <div className="vt-auth-box">
+        <div className="vt-auth-logo">
+          <div className="icon">▶</div>
+          <h2>StreamX</h2>
+          <p>{signedUp?"You're all set!":"Join millions of viewers today"}</p>
+        </div>
+        {signedUp?(
+          <div className="vt-success">
+            <div className="big-e">🎉</div>
+            <h3>Welcome, {signupData.name}!</h3>
+            <p>Your account is ready. Start watching!</p>
+            <button className="vt-submit-btn" onClick={()=>nav("home")}>Go to Home →</button>
+          </div>
+        ):(
+          <>
+            <input className="vt-input" placeholder="Full Name" value={signupData.name} onChange={e=>setSignupData(s=>({...s,name:e.target.value}))}/>
+            <input className="vt-input" type="email" placeholder="Email Address" value={signupData.email} onChange={e=>setSignupData(s=>({...s,email:e.target.value}))}/>
+            <input className="vt-input" type="password" placeholder="Password" value={signupData.password} onChange={e=>setSignupData(s=>({...s,password:e.target.value}))}/>
+            <button className="vt-submit-btn" onClick={()=>{if(signupData.name&&signupData.email)setSignedUp(true);}}>Create Account</button>
+            <div style={{textAlign:"center",marginTop:12,fontSize:13,color:T.muted}}>
+              Already have an account? <span className="vt-link">Sign in</span>
+            </div>
+            <div className="vt-divider">or continue with</div>
+            <div className="vt-social-btns">
+              <button className="vt-social-btn">🔵 Google</button>
+              <button className="vt-social-btn">📘 Facebook</button>
+              <button className="vt-social-btn">🍎 Apple</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── BOTTOM NAV ─────────────────────────────────────────────
+  const BottomNav=()=>(
+    <nav className="vt-bottom-nav">
+      {[["home","🏠","Home"],["trending","🔥","Trending"],["channel","📺","Channel"],["signup","👤","Me"]].map(([pg,ic,l])=>(
+        <button key={pg} className={`vt-bnav-item${page===pg?" active":""}`} onClick={()=>nav(pg)}>
+          <span className="vt-bnav-icon">{ic}</span>{l}
+        </button>
+      ))}
+    </nav>
+  );
+
+  // ── GLOBAL TOAST ───────────────────────────────────────────
+  const Toast=()=>(
+    <div className={`acp-toast${toast.show?" show":""}`}>
+      <span style={{fontSize:16}}>{toast.icon}</span>{toast.msg}
+    </div>
+  );
+
+  // ── RENDER ─────────────────────────────────────────────────
+  return(
+    <div className="vt-app">
+      <NavBar/>
+      <Sidebar/>
+      <main className="vt-main">
+        {page==="home"     && <HomePage/>}
+        {page==="watch"    && <WatchPage/>}
+        {page==="trending" && <TrendingPage/>}
+        {page==="channel"  && <ChannelPage/>}
+        {page==="signup"   && <SignupPage/>}
+      </main>
+      <BottomNav/>
+      <Toast/>
+    </div>
+  );
+}
+
 
